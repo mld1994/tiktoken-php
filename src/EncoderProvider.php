@@ -20,6 +20,11 @@ use const DIRECTORY_SEPARATOR;
 final class EncoderProvider implements ResetInterface
 {
     public const ENCODINGS = [
+        'gpt2' => [
+            'vocab' => 'https://openaipublic.blob.core.windows.net/gpt-2/encodings/main/vocab.bpe',
+            'hash' => '1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5',
+            'pat' => '/\'s|\'t|\'re|\'ve|\'m|\'ll|\'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/u',
+        ],
         'r50k_base' => [
             'vocab' => 'https://openaipublic.blob.core.windows.net/encodings/r50k_base.tiktoken',
             'hash' => '306cd27f03c1a714eca7108e03d66b7dc042abe8c258b44c199a7ed9838dd930',
@@ -50,12 +55,30 @@ final class EncoderProvider implements ResetInterface
         'gpt-4o-' => 'o200k_base',
         'gpt-4-' => 'cl100k_base',
         'gpt-3.5-turbo-' => 'cl100k_base',
+        "gpt-35-turbo-" => "cl100k_base",  # Azure deployment name
+        # fine-tuned
+        "ft:gpt-4-" => "cl100k_base",
+        "ft:gpt-3.5-turbo-" => "cl100k_base",
+        "ft:davinci-002-" => "cl100k_base",
+        "ft:babbage-002-" => "cl100k_base",
     ];
+
     private const MODEL_TO_ENCODING = [
+        # chat
         'gpt-4o' => 'o200k_base',
         'gpt-4' => 'cl100k_base',
         'gpt-3.5-turbo' => 'cl100k_base',
-        'gpt-3.5' => 'cl100k_base',
+        'gpt-3.5' => 'cl100k_base', // Common shorthand
+        'gpt-35-turbo' => 'cl100k_base',    // Azure deployment name
+        # base
+        'davinci-002' => 'cl100k_base',
+        'babbage-002' => 'cl100k_base',
+        # embeddings
+        'text-embedding-ada-002' => 'cl100k_base',
+        'text-embedding-3-small' => 'cl100k_base',
+        'text-embedding-3-large' => 'cl100k_base',
+        # DEPRECATED MODELS
+        # text (DEPRECATED)
         'text-davinci-003' => 'p50k_base',
         'text-davinci-002' => 'p50k_base',
         'text-davinci-001' => 'r50k_base',
@@ -66,15 +89,17 @@ final class EncoderProvider implements ResetInterface
         'curie' => 'r50k_base',
         'babbage' => 'r50k_base',
         'ada' => 'r50k_base',
+        # code (DEPRECATED)
         'code-davinci-002' => 'p50k_base',
         'code-davinci-001' => 'p50k_base',
         'code-cushman-002' => 'p50k_base',
         'code-cushman-001' => 'p50k_base',
         'davinci-codex' => 'p50k_base',
         'cushman-codex' => 'p50k_base',
+        # edit (DEPRECATED)
         'text-davinci-edit-001' => 'p50k_edit',
         'code-davinci-edit-001' => 'p50k_edit',
-        'text-embedding-ada-002' => 'cl100k_base',
+        # old embeddings (DEPRECATED)
         'text-similarity-davinci-001' => 'r50k_base',
         'text-similarity-curie-001' => 'r50k_base',
         'text-similarity-babbage-001' => 'r50k_base',
@@ -85,6 +110,9 @@ final class EncoderProvider implements ResetInterface
         'text-search-ada-doc-001' => 'r50k_base',
         'code-search-babbage-code-001' => 'r50k_base',
         'code-search-ada-code-001' => 'r50k_base',
+        # open source
+        'gpt2' => 'gpt2',
+        'gpt-2' => 'gpt2',  // Maintains consistency with gpt-4        
     ];
 
     private VocabLoader|null $vocabLoader = null;
@@ -126,11 +154,11 @@ final class EncoderProvider implements ResetInterface
     /** @param non-empty-string $encodingName */
     public function get(string $encodingName): Encoder
     {
-        if (! isset(self::ENCODINGS[$encodingName])) {
+        if (!isset(self::ENCODINGS[$encodingName])) {
             throw new InvalidArgumentException(sprintf('Unknown encoding: %s', $encodingName));
         }
 
-        if (! isset($this->encoders[$encodingName])) {
+        if (!isset($this->encoders[$encodingName])) {
             $options = self::ENCODINGS[$encodingName];
 
             return $this->encoders[$encodingName] = new Encoder(
