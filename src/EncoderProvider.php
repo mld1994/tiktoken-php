@@ -19,11 +19,15 @@ use const DIRECTORY_SEPARATOR;
 
 final class EncoderProvider implements ResetInterface
 {
+    /* #region ENCODINGS */
+
     public const ENCODINGS = [
         'gpt2' => [
             'vocab' => 'https://openaipublic.blob.core.windows.net/gpt-2/encodings/main/vocab.bpe',
             'hash' => '1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5',
             'pat' => '/\'s|\'t|\'re|\'ve|\'m|\'ll|\'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/u',
+            'encoder_json_file' => "https://openaipublic.blob.core.windows.net/gpt-2/encodings/main/encoder.json",
+            'encoder_json_hash' => "196139668be63f3b5d6574427317ae82f612a97c5d1cdaf36ed2256dbf636783",
         ],
         'r50k_base' => [
             'vocab' => 'https://openaipublic.blob.core.windows.net/encodings/r50k_base.tiktoken',
@@ -51,6 +55,11 @@ final class EncoderProvider implements ResetInterface
             'pat' => '/[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]*[\p{Ll}\p{Lm}\p{Lo}\p{M}]+(?i:\'s|\'t|\'re|\'ve|\'m|\'ll|\'d)?|[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]+[\p{Ll}\p{Lm}\p{Lo}\p{M}]*(?i:\'s|\'t|\'re|\'ve|\'m|\'ll|\'d)?|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n\/]*|\s*[\r\n]+|\s+(?!\S)|\s+/u',
         ],
     ];
+
+    /* #endregion */
+
+    /* #region MODEL_PREFIX_TO_ENCODING */
+
     private const MODEL_PREFIX_TO_ENCODING = [
         'gpt-4o-' => 'o200k_base',
         'gpt-4-' => 'cl100k_base',
@@ -62,6 +71,10 @@ final class EncoderProvider implements ResetInterface
         "ft:davinci-002-" => "cl100k_base",
         "ft:babbage-002-" => "cl100k_base",
     ];
+
+    /* #endregion */
+
+    /* #region MODEL_TO_ENCODING */
 
     private const MODEL_TO_ENCODING = [
         # chat
@@ -115,6 +128,10 @@ final class EncoderProvider implements ResetInterface
         'gpt-2' => 'gpt2',  // Maintains consistency with gpt-4        
     ];
 
+    /* #endregion */
+
+    /* #region PROPERTIES */
+
     private VocabLoader|null $vocabLoader = null;
     private string|null $vocabCacheDir;
 
@@ -123,6 +140,10 @@ final class EncoderProvider implements ResetInterface
 
     /** @var array<string, Vocab> */
     private array $vocabs = [];
+
+    /* #endregion */
+
+    /* #region Construct */
 
     public function __construct()
     {
@@ -134,6 +155,8 @@ final class EncoderProvider implements ResetInterface
 
         $this->vocabCacheDir = $cacheDir !== '' ? $cacheDir : null;
     }
+
+    /* #endregion */
 
     /** @param non-empty-string $model */
     public function getForModel(string $model): Encoder
@@ -196,8 +219,16 @@ final class EncoderProvider implements ResetInterface
             return $this->vocabs[$encodingName];
         }
 
+        echo $encodingName;
+        $odabrani = self::ENCODINGS[$encodingName];
+        die(print_r($odabrani));
+
         $loader = $this->vocabLoader;
 
+        if ($encodingName == 'gpt2') {
+        } else {
+            $loader = $this->vocabLoader = new DefaultVocabLoader($this->vocabCacheDir);
+        }
         if ($loader === null) {
             $loader = $this->vocabLoader = new DefaultVocabLoader($this->vocabCacheDir);
         }
